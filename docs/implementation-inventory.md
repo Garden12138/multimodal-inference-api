@@ -3,7 +3,7 @@
 盘点时间：2026-11-12。只读来源：
 
 - `.local/references/h3-minimax-native-v2.zip`（已解压到 `.local/extracted/`，未修改压缩包）
-- `/Users/cengjiada/Documents/github/multimodal-creative-studio` 的图片、视频 Provider 和工作流
+- 只读的 Studio 仓库中的图片、视频 Provider 和工作流。跨仓库字节比较不是默认测试，需要显式设置 `INFERENCE_REFERENCE_WORKFLOW_DIR`。
 
 没有读取失败的必要参考。Studio 仓库没有被修改。
 

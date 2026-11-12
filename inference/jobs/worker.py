@@ -19,6 +19,7 @@ from inference.db.repository import (
     mark_running,
     mark_terminal,
     release_worker,
+    revert_unsubmitted,
     store_assets_and_succeed,
     write_recovery_prompt,
 )
@@ -30,12 +31,23 @@ TRANSIENT = {"PROVIDER_UNAVAILABLE", "PROVIDER_TIMEOUT", "ASSET_STORAGE_FAILED"}
 UNCERTAIN_MESSAGE = "无法确认上游是否已接受任务，未自动重新提交。"
 
 
-def process_one(settings: Settings, provider: Provider, media_type: str, worker_id: str) -> bool:
+def process_one(
+    settings: Settings,
+    provider: Provider,
+    media_type: str,
+    worker_id: str,
+    stop: threading.Event,
+) -> bool:
+    if stop.is_set():
+        return False
     task = claim_next(settings, media_type, worker_id)
     if task is None:
         return False
+    if stop.is_set():
+        _pause_for_shutdown(settings, task.id, worker_id)
+        return False
     try:
-        execute(settings, provider, task.id, worker_id, threading.Event())
+        execute(settings, provider, task.id, worker_id, stop)
     except Exception:
         logger.exception("worker crashed task=%s", task.id)
         _crash(settings, task.id)
@@ -47,10 +59,15 @@ def execute(settings: Settings, provider: Provider, task_id: str, worker_id: str
         task = get_task(settings, task_id)
         if task is None or task.status in TERMINAL_STATES:
             return
+        if stop.is_set() and not task.provider_task_id:
+            _pause_for_shutdown(settings, task_id, worker_id)
+            return
         if task.status == "submitting" and not task.provider_task_id:
             if not _submit(settings, provider, task):
                 return
             task = get_task(settings, task_id)
+        if stop.is_set():
+            return
         if task is not None and task.status == "running" and task.provider_task_id:
             _poll(settings, provider, task, stop)
     finally:
@@ -200,6 +217,16 @@ def _read_frame(settings: Settings, storage_key: str | None) -> tuple[bytes, str
 def _finish_provider_error(settings: Settings, task_id: str, exc: ProviderError) -> None:
     status = "needs_review" if exc.uncertain else "failed"
     mark_terminal(settings, task_id, status, exc.code, exc.message)
+
+
+def _pause_for_shutdown(settings: Settings, task_id: str, worker_id: str) -> None:
+    task = get_task(settings, task_id)
+    if task is None or task.status in TERMINAL_STATES:
+        return
+    if task.provider_task_id:
+        release_worker(settings, task_id, worker_id)
+        return
+    revert_unsubmitted(settings, task_id, worker_id)
 
 
 def _crash(settings: Settings, task_id: str) -> None:

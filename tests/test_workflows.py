@@ -1,6 +1,9 @@
 import hashlib
 import json
+import os
 from pathlib import Path
+
+import pytest
 
 from inference.config import ROOT
 from inference.workflows.image import BASELINE, PROMPT_MARKER, prepare_workflow
@@ -8,21 +11,30 @@ from inference.workflows.manifest import WORKFLOW_SHA256
 from inference.workflows.video import BASELINE as VIDEO_BASELINE
 from inference.workflows.video import prepare_video_workflow
 
-STUDIO = Path("/Users/cengjiada/Documents/github/multimodal-creative-studio/workflows")
-PAIRS = {
-    "image/t2i_1mp_api.json": STUDIO / "image" / "t2i_1mp_api.json",
-    "image/t2i_4mp_api.json": STUDIO / "image" / "t2i_4mp_api.json",
-    "video/t2v_api.json": STUDIO / "t2v_api.json",
-    "video/i2v_api.json": STUDIO / "i2v_api.json",
-    "video/flf_api.json": STUDIO / "flf_api.json",
+REFERENCE_PAIRS = {
+    "image/t2i_1mp_api.json": "image/t2i_1mp_api.json",
+    "image/t2i_4mp_api.json": "image/t2i_4mp_api.json",
+    "video/t2v_api.json": "t2v_api.json",
+    "video/i2v_api.json": "i2v_api.json",
+    "video/flf_api.json": "flf_api.json",
 }
 
 
-def test_workflow_bytes_match_verified_studio_files():
-    for relative, source in PAIRS.items():
+def test_workflow_bytes_match_sha256_manifest():
+    for relative, digest in WORKFLOW_SHA256.items():
         copied = (ROOT / "workflows" / relative).read_bytes()
-        assert hashlib.sha256(copied).hexdigest() == WORKFLOW_SHA256[relative]
-        assert copied == source.read_bytes()
+        assert hashlib.sha256(copied).hexdigest() == digest
+
+
+@pytest.mark.skipif(
+    not os.environ.get("INFERENCE_REFERENCE_WORKFLOW_DIR"),
+    reason="set INFERENCE_REFERENCE_WORKFLOW_DIR to compare with an external workflow tree",
+)
+def test_optional_external_workflow_bytes():
+    source_root = Path(os.environ["INFERENCE_REFERENCE_WORKFLOW_DIR"])
+    for relative, source_name in REFERENCE_PAIRS.items():
+        copied = (ROOT / "workflows" / relative).read_bytes()
+        assert copied == (source_root / source_name).read_bytes()
 
 
 def test_image_source_files_differ_only_by_megapixels_prefix_and_exported_seed():

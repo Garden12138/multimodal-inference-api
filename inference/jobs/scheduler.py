@@ -36,20 +36,23 @@ def worker_loop(settings: Settings, provider, media_type: str, worker_id: str, s
     while not stop.is_set():
         worked = False
         try:
-            worked = process_one(settings, provider, media_type, worker_id)
+            worked = process_one(settings, provider, media_type, worker_id, stop)
         except Exception:
             logger.exception("worker loop failed media=%s", media_type)
-        if not worked:
+        if stop.is_set() or not worked:
+            if stop.is_set():
+                return
             stop.wait(settings.idle_interval)
 
 
-def drain(settings: Settings, registry: Registry, *, limit: int = 20) -> int:
+def drain(settings: Settings, registry: Registry, *, limit: int = 20, stop: threading.Event | None = None) -> int:
     """Run claimed work on the calling thread. Used by tests and operators."""
+    stop = stop or threading.Event()
     ran = 0
-    while ran < limit:
+    while ran < limit and not stop.is_set():
         progress = False
         for media_type, provider in (("image", registry.image), ("video", registry.video)):
-            if process_one(settings, provider, media_type, f"manual-{media_type}"):
+            if process_one(settings, provider, media_type, f"manual-{media_type}", stop):
                 progress = True
                 ran += 1
         if not progress:

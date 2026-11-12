@@ -115,6 +115,27 @@ def test_t2v_i2v_and_flf_submit_directly_to_comfyui(tmp_path):
             stack.client.__exit__(None, None, None)
 
 
+def test_image_file_route_rejects_video_assets(tmp_path):
+    stack = build_stack(tmp_path)
+    try:
+        created = _post(stack, video_payload())
+        assert created.status_code == 200, created.text
+        drain(stack.settings, stack.registry)
+        task_id = created.json()["task_id"]
+        from inference.db.repository import list_assets
+
+        assets = list_assets(stack.settings, task_id)
+        assert assets and assets[0].media_type == "video"
+        denied = stack.client.get(f"/v1/files/{assets[0].id}", headers=stack.headers)
+        assert denied.status_code == 404
+        query = stack.client.get(f"/v2/query/video_generation/{task_id}", headers=stack.headers)
+        downloaded = stack.client.get(query.json()["task"]["content"]["url"].removeprefix("http://127.0.0.1:8090"))
+        assert downloaded.status_code == 200
+        assert downloaded.headers["content-type"].startswith("video/mp4")
+    finally:
+        stack.client.__exit__(None, None, None)
+
+
 def test_video_failure_upstream_and_signature(tmp_path):
     stack = build_stack(tmp_path, video=__import__("tests.helpers", fromlist=["ScriptedComfy"]).ScriptedComfy(mode="fail"))
     try:

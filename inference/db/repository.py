@@ -44,8 +44,11 @@ def create_task(
     prompt: str,
     params: dict,
     provider: str,
+    task_id: str | None = None,
 ) -> Task:
-    task_id = uuid.uuid4().hex
+    task_id = task_id or uuid.uuid4().hex
+    if not re.fullmatch(r"[0-9a-f]{32}", task_id):
+        raise InferenceError("INTERNAL_ERROR", "任务编号无效。", 500)
     now = time.time()
     with session(settings) as connection:
         with transaction(connection):
@@ -207,6 +210,24 @@ def mark_terminal(
                 error_code=code,
                 error_message=(message or "")[:500] or None,
                 worker_id=None,
+            )
+
+
+def revert_unsubmitted(settings: Settings, task_id: str, worker_id: str) -> None:
+    """Return a claimed task to the queue only when upstream was not contacted."""
+    with session(settings) as connection:
+        with transaction(connection):
+            current = get_task_conn(connection, task_id)
+            if current is None or current.status != "submitting" or current.provider_task_id:
+                return
+            if current.worker_id not in {None, worker_id}:
+                return
+            update_task_conn(
+                connection,
+                task_id,
+                status="queued",
+                worker_id=None,
+                started_at=None,
             )
 
 

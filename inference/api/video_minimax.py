@@ -6,7 +6,7 @@ import base64
 import binascii
 import io
 import re
-import time
+import uuid
 from pathlib import Path
 
 from fastapi import APIRouter, Request
@@ -14,10 +14,10 @@ from fastapi.responses import JSONResponse
 from PIL import Image, UnidentifiedImageError
 
 from inference.api.responses import read_json_object
-from inference.assets.storage import save_bytes
+from inference.assets.storage import remove_key, save_bytes
 from inference.assets.signing import signed_video_url
 from inference.config import Settings
-from inference.db.repository import create_task, get_task, update_task
+from inference.db.repository import create_task, get_task
 from inference.errors import ProtocolError
 from inference.workflows.video import (
     ACTUAL_RESOLUTION,
@@ -221,29 +221,32 @@ async def create_video(request: Request):
         "resolution_fallback": True,
         "resolution_source": "verified_workflow_baseline",
     }
-    task = create_task(
-        settings,
-        media_type="video",
-        model=VIDEO_MODEL,
-        mode=mode,
-        prompt=prompt,
-        params=params,
-        provider="comfyui_h3_video",
-    )
+    task_id = uuid.uuid4().hex
+    stored = dict(params)
+    saved_keys: list[str] = []
     try:
-        stored = dict(params)
         for role, (filename, raw, _mime) in images.items():
             suffix = Path(filename).suffix
-            key = f"inputs/{task.id}/{role}{suffix}"
+            key = f"inputs/{task_id}/{role}{suffix}"
             save_bytes(settings, key, raw)
+            saved_keys.append(key)
             stored[f"{role}_key"] = key
             stored[f"{role}_filename"] = filename
-        if stored != params:
-            update_task(settings, task.id, params=stored)
+        task = create_task(
+            settings,
+            task_id=task_id,
+            media_type="video",
+            model=VIDEO_MODEL,
+            mode=mode,
+            prompt=prompt,
+            params=stored,
+            provider="comfyui_h3_video",
+        )
     except Exception as exc:
-        from inference.db.repository import mark_terminal
-
-        mark_terminal(settings, task.id, "failed", "ASSET_STORAGE_FAILED", "参考图片未能保存。")
+        for key in saved_keys:
+            remove_key(settings, key)
+        if isinstance(exc, ProtocolError):
+            raise
         raise ProtocolError("STORAGE_FAILED", "Reference image could not be stored", 500) from exc
     return JSONResponse(
         {"task_id": task.id},

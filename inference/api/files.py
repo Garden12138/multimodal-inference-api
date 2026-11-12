@@ -17,7 +17,8 @@ from inference.errors import InferenceError, ProtocolError
 image_router = APIRouter(prefix="/v1")
 video_router = APIRouter(prefix="/v2")
 HEX_ID = re.compile(r"^[0-9a-f]{32}$")
-ALLOWED_MIME = {"image/png", "image/jpeg", "image/webp", "video/mp4", "video/webm", "video/x-matroska"}
+IMAGE_MIME = {"image/png", "image/jpeg", "image/webp"}
+VIDEO_MIME = {"video/mp4", "video/webm", "video/x-matroska"}
 
 
 @image_router.get("/files/{asset_id}")
@@ -34,7 +35,7 @@ def download_asset(asset_id: str, request: Request, expires: int | None = None, 
         message = "下载链接无效或已过期。" if status == 403 else "需要 API Key 或有效签名。"
         raise InferenceError(code, message, status)
     asset = get_asset(settings, asset_id)
-    if asset is None or asset.mime_type not in ALLOWED_MIME:
+    if asset is None or asset.media_type != "image" or asset.mime_type not in IMAGE_MIME:
         raise InferenceError("NOT_FOUND", "文件不存在。", 404)
     path = read_verified(settings, asset.storage_key, asset.sha256)
     filename = safe_download_name(asset.filename, f"{asset.id}.bin")
@@ -60,7 +61,7 @@ def download_video(task_id: str, request: Request, expires: int, signature: str)
     if task.status != "succeeded":
         raise ProtocolError("NOT_READY", "Video is not ready", 409)
     assets = [asset for asset in list_assets(settings, task.id) if asset.media_type == "video"]
-    if not assets or assets[0].mime_type not in ALLOWED_MIME:
+    if not assets or assets[0].mime_type not in VIDEO_MIME:
         raise ProtocolError("NOT_FOUND", "Video file is missing", 404)
     asset = assets[0]
     try:

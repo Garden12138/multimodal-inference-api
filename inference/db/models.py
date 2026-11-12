@@ -7,7 +7,7 @@ from dataclasses import dataclass
 
 TRANSITIONS = {
     "queued": {"submitting", "failed", "needs_review"},
-    "submitting": {"running", "failed", "needs_review"},
+    "submitting": {"queued", "running", "failed", "needs_review"},
     "running": {"succeeded", "failed", "needs_review"},
     "succeeded": set(),
     "failed": set(),

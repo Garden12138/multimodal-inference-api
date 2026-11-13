@@ -2,6 +2,8 @@
 
 日期：2026-11-13。结论：**PASS**。
 
+这次验收通过 HTTP 调用当时正在监听的 `8090`。没有读取该进程的启动命令或 Git 修订，因此运行版本是 **DEPLOYMENT_REVISION_UNVERIFIED**。它不能写成 `6e021ac` 或 `aa0d568`。重启后的文件持久性也不在本次范围内，方案见 [104 重启验收方案](104-restart-acceptance-plan.md)。
+
 本次从 Mac 通过 HTTP 调用 `http://192.168.10.104:8090`。生成使用远端 ComfyUI Provider，没有使用 Mock Provider。API Key 只从运行进程的环境变量读取，本报告、日志和结果 JSON 都不包含密钥。
 
 ## 基线

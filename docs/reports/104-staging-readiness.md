@@ -1,5 +1,7 @@
 # 104 预发就绪
 
+> 阅读说明（2026-11-13）：本文撰写时真实生成是 NOT RUN，这个结论保留。后来的 HTTP 真实验收见 [104 远程真实验收](104-remote-acceptance-2026-11-13.md)。发布收尾见 [V1 发布验收](v1-release-acceptance.md)。104 运行进程修订是 DEPLOYMENT_REVISION_UNVERIFIED。
+
 日期：2026-11-12。分支：`feature/native-api-v1`。审查基线：`141e1520ca2b987967bc42f6ea7a42c76c45818e`。
 
 代码与本地生命周期结论：**READY_FOR_104_STAGING**。

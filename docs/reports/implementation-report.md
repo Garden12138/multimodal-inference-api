@@ -1,5 +1,7 @@
 # 实现报告
 
+> 阅读说明（2026-11-13）：本文是实现当时的记录。文中的 Mock 次数和“真实 GPU 未执行”都保持原样。后续 104 真实生成见 [104 远程真实验收](104-remote-acceptance-2026-11-13.md)，当前发布结论见 [V1 发布验收](v1-release-acceptance.md)。104 运行进程修订是 DEPLOYMENT_REVISION_UNVERIFIED。
+
 日期：2026-11-12。仓库是独立的 `multimodal-inference-api`，不是 Studio 的子模块。
 
 ## 结果

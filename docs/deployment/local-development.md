@@ -1,6 +1,10 @@
 # 本地开发
 
-开发服务只监听 `127.0.0.1:8090`。这和以后在 104 上使用 `0.0.0.0:8089` 不是同一次操作。本版本的启动代码拒绝 `INFERENCE_PORT=8089`。
+本文件描述 Mac 或开发机上的 API 进程。它不是 104 上的 GPU 服务，也不会启动 ComfyUI。
+
+开发服务监听 `127.0.0.1:8090`。104 上的 V1 对内网开放时才使用 `0.0.0.0:8090`。两条路径都拒绝 `INFERENCE_PORT=8089`。8089 留给现有旧服务。
+
+本机收尾测试使用检出目录里的 `.venv`，Python 3.10.9。`scripts/install.sh` 也创建这个虚拟环境。不要把它改成 Conda，也不要假定 104 一定已经使用同一个 `.venv`。104 的解释器需要在服务器上确认。
 
 ## 安装
 
@@ -49,9 +53,49 @@ VIDEO_COMFYUI_BASE_URL=http://127.0.0.1:8189
 
 ## 配置差异
 
-| 项目 | 本地开发 | 以后的 104 正式切换 |
+| 项目 | 本地开发 | 104 上的 V1 |
 |---|---|---|
-| 地址 | `127.0.0.1:8090` | 计划为 `0.0.0.0:8089`，本次不执行 |
-| 数据 | 仓库内 `data/` | 部署目录自己的 `data/`，不使用 Studio SQLite |
-| CIDR | 默认仅 loopback | 必须显式写成 104 所在内网 |
-| 降级开关 | 默认 `0` | 若要兼容现有 `768P` 客户端，设为 `1`，响应仍声明 `608x352` |
+| API | `127.0.0.1:8090` | `0.0.0.0:8090`，由 CIDR 限制来源 |
+| 旧 API | 不使用 8089 | 8089 保持不变，不迁移 |
+| 图片 ComfyUI | 本机 `127.0.0.1:8190`，可以不存在 | GPU 机器上的 `127.0.0.1:8190` |
+| 视频 ComfyUI | 本机 `127.0.0.1:8189`，可以不存在 | GPU 机器上的 `127.0.0.1:8189` |
+| 数据 | 本检出目录的 `data/` | 104 上该检出目录自己的 `data/` |
+| CIDR | 默认仅 loopback | 必须写成批准的内网范围 |
+| 降级开关 | 默认 `0` | 兼容现有 `768P` 客户端时设为 `1`，响应仍是 `608x352` |
+
+## 本目录内的日常操作
+
+以下命令都先 `cd` 到本仓库。它们不停止其他目录或其他端口上的进程。
+
+状态和日志：
+
+```bash
+bash scripts/status.sh
+tail -n 80 data/logs/inference.log
+```
+
+重启只针对本 API：
+
+```bash
+bash scripts/stop.sh
+bash scripts/start.sh
+```
+
+`stop.sh` 在 10 秒内等不到退出时不会发送 `SIGKILL`。不要接着去杀 8089、8189 或 8190。
+
+备份前先停止本 API，避免复制到写了一半的 SQLite：
+
+```bash
+bash scripts/stop.sh
+STAMP="$(date +%Y%m%d%H%M%S)"
+mkdir -p "data/backups/$STAMP"
+cp -a data/inference.db "data/backups/$STAMP/inference.db"
+cp -a data/outputs data/inputs data/recovery "data/backups/$STAMP/"
+bash scripts/start.sh
+```
+
+恢复使用同一次备份，并且只覆盖本目录的这些路径。先停止，再复制回去，然后启动。不要把开发机的 `data/` 拷到 104 覆盖真实任务。
+
+升级和回退都在同一个检出目录里进行：先备份并停止，再检出目标提交，执行 `bash scripts/install.sh`。安装脚本不会覆盖已有 `.env`。确认端口仍是 8090 后执行 `bash scripts/start.sh`。没有标签之前不要执行 `git checkout v1.0.0`。
+
+异常任务和 `needs_review` 的处理见 [排障](../operations/troubleshooting.md)。

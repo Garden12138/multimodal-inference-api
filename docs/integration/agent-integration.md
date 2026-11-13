@@ -1,6 +1,8 @@
 # Agent 接入
 
-本服务可以直接被没有 Studio 账号的 Agent 调用。示例里的地址是本机 `8090`。密钥从环境变量读取。
+本服务是 V1.0.0，可以直接被没有 Studio 账号的 Agent 调用。示例里的地址是本机 `8090`。104 上的 V1 地址是 `http://192.168.10.104:8090`。密钥从环境变量读取，不要写进仓库。
+
+契约和错误码以 [API 契约](../spec/03-api-contract.md) 为准。图片状态使用 `error.code`。视频失败对外仍是 `local_generation_failed`，`needs_review` 对外是 `submission_uncertain` 并带 `attention_required`。内部的 `submitting` 在视频查询里显示为 `running`。
 
 ```bash
 export INFERENCE_API_KEY='替换为服务端密钥'

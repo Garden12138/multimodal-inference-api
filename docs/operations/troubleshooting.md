@@ -28,14 +28,20 @@ bash scripts/status.sh
 
 ## needs_review
 
-任务可能已经进入 ComfyUI，也可能没有。处理方式：
+`needs_review` 是终态。任务表不允许服务自己把它改回 `queued` 或 `running`，接口也没有恢复动作。重启不会重放已经进入 `needs_review` 的任务。
 
-1. 不要用同一个请求自动重试。
-2. 在 ComfyUI 历史里按 `client_id`（等于本服务 `task_id`）查看是否有 `prompt_id`。
-3. 如果找到了，可以把编号写入该任务的 `provider_task_id` 并把状态改为 `running`，然后重启服务让 Worker 继续查询。这一步是人工修复。
-4. 如果确认队列里没有这次提交，再创建一条新任务。
+启动时只会处理仍是 `submitting` 或 `running` 的行：找到数据库里的 `provider_task_id`，或找到格式正确的 `data/recovery/{task_id}.txt`，就把该行继续设为 `running` 并接着查询。两者都没有时，这一行变成 `needs_review`，错误码是 `SUBMISSION_UNCERTAIN`。这不会自动重新提交。
 
-`data/recovery/*.txt` 里只有 `prompt_id`。服务重启时会读它。
+处理方式：
+
+1. 不要用同一个请求自动再创建一次。
+2. 在对应的 ComfyUI 历史里按 `client_id`（等于本服务 `task_id`）查看是否已经有 `prompt_id`。查看历史不是重启 ComfyUI。
+3. 如果没有这次提交，向调用方返回当前错误，并由调用方决定是否新建任务。
+4. 如果确认上游已经接受，V1 没有安全的恢复接口。不要为了续跑去改 8089，也不要重启 8189 或 8190。需要人工续跑时，只修改本 API 目录的 `data/inference.db`：在停掉本 API 后，把该任务写成 `running`、填上确认过的 `provider_task_id`、清空 `worker_id`，然后只启动本 API。这一步绕过状态机，只在上游编号已经核对之后进行。不能确认时不要改行。
+
+## 重启、升级和回退
+
+重启本服务使用同一个检出目录里的 `scripts/stop.sh` 和 `scripts/start.sh`。升级或回退前先按 [本地开发](../deployment/local-development.md) 或 [104 部署说明](../deployment/server-104.md) 备份 `data/`。安装脚本不会改已有 `.env`，也不会停止其他端口。
 
 ## 文件 404 或 409
 

@@ -1,5 +1,7 @@
 # 自动化测试报告
 
+> 阅读说明（2026-11-13）：本文记录 2026-11-12 的那次自动化测试。23 passed 不要改成后来的数字。当前代码的重新执行见 [V1 发布验收](v1-release-acceptance.md)。104 运行进程修订是 DEPLOYMENT_REVISION_UNVERIFIED。
+
 日期：2026-11-12。命令：`.venv/bin/python -m pytest`。
 
 结果：**23 passed**，1 条 Starlette 弃用警告（`TestClient` 仍使用 `httpx`）。没有失败。

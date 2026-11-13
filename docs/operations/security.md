@@ -10,6 +10,9 @@
 
 ## 网络和下载
 
+- V1 对内网提供服务时，`INFERENCE_HOST=0.0.0.0` 且 `INFERENCE_PORT=8090`。仅绑定所有网卡并不等于允许所有来源，还要配置 `INFERENCE_ALLOWED_CIDRS`。
+- 104 的内网范围由操作人员写入该目录的 `.env`。示例文件只保留 loopback，避免新安装默认暴露。
+
 - `INFERENCE_ALLOWED_CIDRS` 默认是 loopback。空列表会拒绝所有来源。旧变量 `H3_ALLOWED_CIDRS` 不会被读取，避免两套网段策略。
 - 视频下载只接受 HMAC 签名，签名材料是 `{task_id}.{expires}`。
 - 图片下载接受 Bearer，或材料为 `asset.{asset_id}.{expires}` 的签名。
@@ -21,6 +24,12 @@
 ## 任务隔离
 
 V1 是单密钥。持有密钥且知道任务编号的调用方可以查询该任务。签名 URL 在过期前也可以下载对应文件。服务没有任务列表，因此不能靠枚举接口扫出别人的结果；32 位十六进制编号本身不可猜测。这不是按 Agent 分权。
+
+## 备份
+
+`data/inference.db`、`data/inputs`、`data/outputs` 和 `data/recovery` 含有提示词和生成结果。备份留在该检出目录的 `data/backups/`，不要提交到 Git。`.gitignore` 已经忽略整个 `data/`。
+
+恢复只覆盖同一个 API 目录里的这些路径。不要用一份备份替换另一个服务的数据库。
 
 ## 不自动重试的原因
 

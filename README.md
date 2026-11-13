@@ -1,8 +1,10 @@
 # Multimodal Inference API
 
-独立的多模态推理 API。V1 提供 MiniMax H3 图片和 MiniMax H3 视频的异步任务接口，直接调用本机 ComfyUI，不依赖 Multimodal Creative Studio。
+版本 1.0.0。独立的多模态推理 API，提供 MiniMax H3 图片和 MiniMax H3 视频的异步任务接口，直接调用本机 ComfyUI，不依赖 Multimodal Creative Studio。
 
 音乐生成只保留 Provider 扩展位，没有实现，也没有对应路由。
+
+V1 端口是 8090。本机开发绑定 `127.0.0.1`，104 对内网服务时绑定 `0.0.0.0`。8089 留给现有旧服务，本版本拒绝绑定它，也不会迁移它。图片 ComfyUI 是 8190，视频 ComfyUI 是 8189。这两个进程不由本仓库的脚本停止。
 
 ## 本地运行
 
@@ -38,5 +40,10 @@ bash scripts/stop.sh
 - [API 契约](docs/spec/03-api-contract.md)
 - [本地开发](docs/deployment/local-development.md)
 - [104 部署说明](docs/deployment/server-104.md)
-- [104 远程真实验收](docs/reports/104-remote-acceptance-2026-11-13.md)
+- [安全](docs/operations/security.md)
+- [排障](docs/operations/troubleshooting.md)
 - [Agent 接入](docs/integration/agent-integration.md)
+- [104 远程真实验收](docs/reports/104-remote-acceptance-2026-11-13.md)
+- [V1 发布验收](docs/reports/v1-release-acceptance.md)
+
+Mock 测试通过不等于 104 真实推理通过。发布状态见 V1 发布验收。当前是 `READY_FOR_V1_RELEASE`，还不是生产切换完成。

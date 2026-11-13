@@ -38,4 +38,5 @@ bash scripts/stop.sh
 - [API 契约](docs/spec/03-api-contract.md)
 - [本地开发](docs/deployment/local-development.md)
 - [104 部署说明](docs/deployment/server-104.md)
+- [104 远程真实验收](docs/reports/104-remote-acceptance-2026-11-13.md)
 - [Agent 接入](docs/integration/agent-integration.md)

@@ -35,8 +35,8 @@ VIDEO_WORKERS=1
 4. `chmod 600 .env` 后执行 `bash scripts/start.sh`。
 5. 用 `bash scripts/status.sh` 和 `journalctl` 或 `data/logs/inference.log` 查看日志。
 6. 先调用 `/healthz`、`/v1/health`、`/v2/health`。确认 `studio_dependency` 为 `false`。
-7. 在维护窗口对 1024、2048、T2V、I2V、FLF 各做一次真实生成，并核对图片像素和视频实际分辨率仍是 `608x352`。
-8. 只有真实结果通过后，才讨论停止旧的 8089 进程。停止旧服务不属于本仓库脚本的默认行为。
+7. 在维护窗口对 1024、2048、T2V、I2V、FLF 各做一次真实生成，并核对图片像素和视频实际分辨率仍是 `608x352`。2026-11-13 已在 `http://192.168.10.104:8090` 完成，结论为 PASS，记录见 [104 远程真实验收](../reports/104-remote-acceptance-2026-11-13.md)。视频实测仍是 `608x352`。
+8. 只有真实结果通过后，才讨论停止旧的 8089 进程。停止旧服务不属于本仓库脚本的默认行为。本次验收没有操作 8089。
 
 ## systemd
 

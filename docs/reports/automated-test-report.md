@@ -4,7 +4,7 @@
 
 结果：**23 passed**，1 条 Starlette 弃用警告（`TestClient` 仍使用 `httpx`）。没有失败。
 
-这些测试使用 `FakeTransport` / `ScriptedComfy`。它们不连接 8189 或 8190，**不能**写成真实 GPU 推理成功。
+这些测试使用 `FakeTransport` / `ScriptedComfy`。它们不连接 8189 或 8190，**不能**写成真实 GPU 推理成功。104 上的真实生成见 [104 远程真实验收](104-remote-acceptance-2026-11-13.md)。下表仍是 2026-11-12 这次自动化测试的范围。
 
 | 文件 | 数量 | 覆盖 |
 |---|---|---|

@@ -115,11 +115,46 @@ API 运维验收已经是 `READY_FOR_V1_PRODUCTION`。合并和标签仍由人�
 
 ## V1.0.0 Release Notes
 
-独立的多模态推理 API 1.0.0 提供 MiniMax H3 图片和视频任务。图片支持 1024 与 2048。视频支持文生、图生和首末帧；请求可以写 768P，实际像素是已验证的 608×352。
+以下是准备给 GitHub Release 使用的说明。本文只归档草稿，不创建标签，也不发布 Release。
 
-服务直接调用本机 ComfyUI，不依赖 Studio 的任务接口。V1 监听 8090，并拒绝绑定 8089。8189 和 8190 上的 ComfyUI 不由本仓库的脚本停止。
+### 功能
 
-104 上的五种真实生成已在 2026-11-13 通过。同日重启后，五个历史文件经 HTTP 重新下载，SHA-256 与首次验收一致。Music3 没有实现。
+Multimodal Inference API 1.0.0 是独立的 MiniMax H3 推理服务，直接调用本机 ComfyUI，不依赖 Multimodal Creative Studio 的任务接口。
+
+- 图片：`1024x1024` 与 `2048x2048`。
+- 视频：文生视频、图生视频、首末帧。时长只接受 5 秒。
+- 视频请求可以写 `768P`。接口和 ffprobe 的实际像素是 **608×352**，不会报成 768P。使用该标签需要 `VIDEO_ALLOW_RESOLUTION_FALLBACK=1`。
+- 音乐 Provider 保持 `not_implemented`，没有 Music3 路由。
+
+契约见 [API 契约](../spec/03-api-contract.md)。图片创建返回 202，视频创建返回 200。除 `/healthz` 外需要 Bearer 密钥。下载使用限时签名 URL。
+
+### 部署
+
+V1 监听 **8090**，并拒绝绑定 8089。8089 留给现有旧服务，本版本不切换它。图片 ComfyUI 为 `127.0.0.1:8190`，视频 ComfyUI 为 `127.0.0.1:8189`，本仓库脚本不停止这两个进程。
+
+仓库的 `scripts/install.sh` 和 systemd 模板使用检出目录里的 `.venv`。104 上操作人员回报的运行环境是 Conda `multimodal-inference-api`、Python 3.11.18。两套解释器不同，运行时代码与已验收的 `6e021ac9b35169198fd2bd03261f7c1fa26c0b0f` 一致。即将进入 `main` 的提交在该基线之后只增加文档和 CI。
+
+部署步骤见 [104 部署说明](../deployment/server-104.md)。
+
+### 真实验收
+
+2026-11-13 在 `http://192.168.10.104:8090` 完成五项真实生成，结论 PASS：1024、2048、T2V、I2V、FLF。记录见 [104 远程真实验收](104-remote-acceptance-2026-11-13.md)。
+
+同日完成备份、Conda 重启和五个历史任务恢复。本机重新下载的两张 PNG 与三段 MP4，SHA-256 与首次验收一致。结论为 `READY_FOR_V1_PRODUCTION`。记录见 [104 运维验收](104-operations-acceptance-2026-11-13.md)。
+
+104 的 Commit、PID、Conda 路径和备份目录来自操作人员回报。本机没有 SSH 读取进程。
+
+### 已知限制
+
+- 视频实际输出是 608×352，不是 768P。
+- 图片只接受 1024×1024 和 2048×2048。
+- `needs_review` 是终态，服务不会自动再次提交。
+- 单密钥，没有计费、多租户或任务列表。
+- Music3 没有实现。
+
+### 后续
+
+合并到 `main` 并通过 CI 之后，由人工创建 `v1.0.0` 标签和 GitHub Release。不在本说明中宣布尚未验收的生成能力。后续可以单独规划 Music3，以及是否把 104 的启动方式从 Conda 记录进 systemd 模板。
 
 ## 创建标签
 
@@ -143,4 +178,4 @@ git push origin v1.0.0
 - 104 五种生成 PASS。操作人员回报运行 Commit 为 `6e021ac`，重启后五个历史文件的 HTTP 再下载通过。
 - 不切换 8089。标签在合并到 `main` 之后由人工创建。
 
-打开 PR 后看 GitHub Actions。检查失败时不要合并。本次不自动创建或合并 PR。
+打开 PR 后看 GitHub Actions。检查失败时不要合并。不自动合并，不创建标签，不发布 GitHub Release。

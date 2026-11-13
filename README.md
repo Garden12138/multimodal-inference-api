@@ -44,6 +44,7 @@ bash scripts/stop.sh
 - [排障](docs/operations/troubleshooting.md)
 - [Agent 接入](docs/integration/agent-integration.md)
 - [104 远程真实验收](docs/reports/104-remote-acceptance-2026-11-13.md)
+- [104 运维验收](docs/reports/104-operations-acceptance-2026-11-13.md)
 - [V1 发布验收](docs/reports/v1-release-acceptance.md)
 
-Mock 测试通过不等于 104 真实推理通过。发布状态见 V1 发布验收。当前是 `READY_FOR_V1_RELEASE`，还不是生产切换完成。
+Mock 测试通过不等于 104 真实推理通过。发布状态见 V1 发布验收。API 运维验收结论是 `READY_FOR_V1_PRODUCTION`。8089 仍未切换，`v1.0.0` 标签尚未创建。

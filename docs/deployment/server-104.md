@@ -11,9 +11,9 @@ V1 正式端口是 **8090**。8089 留给现有旧服务，不迁移。`load_set
 | 图片 ComfyUI | `127.0.0.1:8190` |
 | 视频 ComfyUI | `127.0.0.1:8189` |
 
-`scripts/install.sh` 在检出目录创建 `.venv`，systemd 模板也调用这个解释器。2026-11-13 的收尾没有读取 104 上的进程，因此实际 Python 和虚拟环境是未确认项，运行中的 Git 修订是 **DEPLOYMENT_REVISION_UNVERIFIED**。操作人员需要在服务器上记录 `ps` 里的解释器路径和 `git rev-parse HEAD`。本机文档测试使用的是 Python 3.10.9 的 `.venv`，不能当成 104 的事实。
+`scripts/install.sh` 在检出目录创建 `.venv`，systemd 模板也调用这个解释器。操作人员于 2026-11-13 回报：104 实际使用 Conda 环境 `multimodal-inference-api`、Python 3.11.18，运行 Commit 为 `6e021ac9b35169198fd2bd03261f7c1fa26c0b0f`。本机没有 SSH 读取该进程。本机文档测试使用的是 Python 3.10.9 的 `.venv`，与 104 的回报环境不同。systemd 模板仍指向 `.venv`，没有改成 Conda。
 
-五种真实生成已在 2026-11-13 通过，见 [104 远程真实验收](../reports/104-remote-acceptance-2026-11-13.md)。重启验收还没有做，方案见 [104 重启验收方案](../reports/104-restart-acceptance-plan.md)。下面的安装步骤是操作手册。本次收尾没有重新执行它们，也没有 SSH。
+五种真实生成已在 2026-11-13 通过，见 [104 远程真实验收](../reports/104-remote-acceptance-2026-11-13.md)。同日的重启与历史文件恢复见 [104 运维验收](../reports/104-operations-acceptance-2026-11-13.md)。检查步骤仍保留在 [104 重启验收方案](../reports/104-restart-acceptance-plan.md)。下面的安装步骤是操作手册。文档更新没有重新执行安装，也没有 SSH。
 
 ## 首次安装
 
